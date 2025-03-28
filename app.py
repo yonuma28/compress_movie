@@ -18,12 +18,18 @@ TOKEN = os.getenv('TOKEN')
 # 動画を圧縮する関数
 def compress_video(input_file, output_file, target_size):
     video = mp.VideoFileClip(input_file)
-    video.write_videofile(output_file, bitrate=target_size)
+    video.write_videofile(output_file, codec='libx264', bitrate=target_size)
     video.close()
 
 @app.route('/')
 def index():
     return render_template('upload.html')
+
+@app.route('/text', methods=['POST'])
+def receive_text():
+    text = request.form['text']
+    print("受け取ったテキスト:", text)  # ターミナルに表示
+    return "テキストを受け取りました", 200
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
