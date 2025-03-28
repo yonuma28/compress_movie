@@ -47,6 +47,7 @@ def upload_file():
 
     return render_template('upload.html', message='ファイルがアップロードされました！')
 
+
 def process_and_send(file_path):
     """動画をCloudinaryにアップロードし、Discordに送信"""
     upload_result = cloudinary.uploader.upload(
@@ -55,11 +56,10 @@ def process_and_send(file_path):
         eager=[{'width': 800, 'height': 600, 'crop': 'limit'}]
     )
 
-    # 圧縮後の動画URL
     compressed_video_url = upload_result['eager'][0]['secure_url']
 
-    # Discordへ送信
-    asyncio.create_task(send_to_discord(compressed_video_url))
+    # 新しいイベントループを作成して send_to_discord を実行
+    asyncio.run(send_to_discord(compressed_video_url))
 
 async def send_to_discord(video_url):
     """Discordに動画のURLを送信"""
