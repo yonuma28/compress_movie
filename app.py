@@ -55,7 +55,7 @@ def upload_file():
     # Discordに送信
     send_to_discord(compressed_video_url)
 
-    return 'ファイルがアップロードされ、圧縮されました！'
+    return render_template('upload.html', message='ファイルがアップロードされ、圧縮されました！')
 
 def send_to_discord(video_url):
     @bot.event
