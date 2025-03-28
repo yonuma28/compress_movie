@@ -3,3 +3,4 @@ werkzeug>=2.0.0
 moviepy==1.0.3
 discord.py==1.7.3
 gunicorn
+cloudinary
