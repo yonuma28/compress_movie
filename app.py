@@ -21,6 +21,9 @@ TOKEN = os.getenv('TOKEN')
 CHANNEL_ID = 1244248370307010654  # 送信先のチャンネルID
 
 intents = discord.Intents.default()
+intents.messages = True  # メッセージ送信を有効化
+intents.guilds = True    # ギルド情報を取得可能にする
+
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 UPLOAD_FOLDER = 'uploads'
@@ -66,6 +69,19 @@ async def send_to_discord(video_url):
     if channel is None:
         channel = await bot.fetch_channel(CHANNEL_ID)
     await channel.send(video_url)
+
+@bot.event
+async def on_ready():
+    """Botが起動したときに通知を送信"""
+    print(f'Logged in as {bot.user}')
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        await channel.send("Bot is online!")
+
+@bot.command()
+async def test(ctx):
+    """!test コマンドでメッセージを送信"""
+    await ctx.send("Test message from bot!")
 
 def run_flask():
     """Flaskアプリを実行"""
