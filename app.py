@@ -53,6 +53,7 @@ def process_and_upload(file_path):
 
     # Replit の Discord BOT に動画 URL を送信
     try:
+        print(f"Sending data: {{'url': '{video_url}'}}")  # 実際に送信するデータを確認
         response = requests.post(REPLIT_DISCORD_ENDPOINT, json={"video_url": video_url})
         print(f"koko no URL kakunin* {response}")
         print(f"Sent video URL to Replit: {response.status_code} - {response.text}")
