@@ -54,6 +54,7 @@ def process_and_upload(file_path):
     # Replit の Discord BOT に動画 URL を送信
     try:
         response = requests.post(REPLIT_DISCORD_ENDPOINT, json={"video_url": video_url})
+        print(f"koko no URL kakunin* {response}")
         print(f"Sent video URL to Replit: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"Error sending video URL: {e}")
