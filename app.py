@@ -47,7 +47,6 @@ def upload_file():
 
     return render_template('upload.html', message='ファイルがアップロードされました！')
 
-
 def process_and_send(file_path):
     """動画をCloudinaryにアップロードし、Discordに送信"""
     upload_result = cloudinary.uploader.upload(
@@ -58,17 +57,23 @@ def process_and_send(file_path):
 
     compressed_video_url = upload_result['eager'][0]['secure_url']
 
-    # 新しいイベントループを作成して send_to_discord を実行
-    asyncio.run(send_to_discord(compressed_video_url))
+    # bot.loop を使ってタスクをスケジュール
+    bot.loop.create_task(send_to_discord(compressed_video_url))
 
 async def send_to_discord(video_url):
     """Discordに動画のURLを送信"""
-    async with bot:
-        channel = bot.get_channel(CHANNEL_ID)
-        if channel is None:
-            channel = await bot.fetch_channel(CHANNEL_ID)
-        await channel.send(video_url)
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel is None:
+        channel = await bot.fetch_channel(CHANNEL_ID)
+    await channel.send(video_url)
+
+def run_flask():
+    """Flaskアプリを実行"""
+    app.run(debug=True, use_reloader=False)
 
 if __name__ == '__main__':
-    bot.loop.create_task(app.run(debug=True, use_reloader=False))
-    bot.run(TOKEN)
+    # Flask を別スレッドで実行
+    threading.Thread(target=run_flask).start()
+
+    # Discord Bot を実行
+    asyncio.run(bot.start(TOKEN))
