@@ -18,8 +18,8 @@ cloudinary.config(
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-REPLIT_URL = "https://your-replit-app.repl.co/keep_alive"  # Replit のエンドポイント
-REPLIT_DISCORD_ENDPOINT = "https://your-replit-app.repl.co/send_video"  # 動画URL送信用エンドポイント
+REPLIT_URL = "https://2c6aa011-4aab-4719-a328-72141802bf19-00-1sun3j2fbtgrc.riker.replit.dev/keep_alive"  # Replit のエンドポイント
+REPLIT_DISCORD_ENDPOINT = "https://2c6aa011-4aab-4719-a328-72141802bf19-00-1sun3j2fbtgrc.riker.replit.dev/send_video"  # 動画URL送信用エンドポイント
 
 @app.route('/')
 def index():
