@@ -43,6 +43,7 @@ def upload_file():
 
 @app.route('/keep', methods=['GET'])
 def keep():
+    print("receive a signal from replit")
     return jsonify({'message', 'Alive'}), 200
 
 def process_and_upload(file_path):
