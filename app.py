@@ -74,7 +74,7 @@ def ping_replit():
         except Exception as e:
             print(f"Error sending ping: {e}")
 
-        time.sleep(300)
+        time.sleep(10)
 
 if __name__ == '__main__':
     threading.Thread(target=ping_replit, daemon=True).start()
