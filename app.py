@@ -25,7 +25,7 @@ cloudinary.config(
 )
 
 # Discord クライアント設定
-intents = Intents.default()
+intents = Intents.all()  # すべてのインテントを有効にする
 intents.message_content = True
 client = discord.Client(intents=intents)
 
