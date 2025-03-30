@@ -41,7 +41,7 @@ def upload_file():
 
     return render_template('upload.html', message='ファイルがアップロードされました！')
 
-@app.route('/keep', method=['GET'])
+@app.route('/keep', methods=['GET'])
 def keep():
     return jsonify({'message', 'Alive'}), 200
 
