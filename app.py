@@ -66,6 +66,4 @@ def process_and_upload(file_path, title):
         print(f"Error sending video URL: {e}")
 
 if __name__ == '__main__':
-    threading.Thread(target=ping_replit, daemon=True).start()
-
     app.run(debug=True, use_reloader=False)
