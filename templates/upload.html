@@ -5,8 +5,10 @@
     <title>動画アップロード</title>
 </head>
 <body>
-    <h1>動画をアップロードしてください</h1>
+    <h1>タイトルを入力してください</h1>
     <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="text" name="title" placeholder="タイトルを入力" required>
+        <h1>動画をアップロードしてください</h1>
         <input type="file" name="file" accept="video/*" required>
         <input type="submit" value="アップロード">
     </form>

@@ -34,10 +34,11 @@ def upload_file():
     if file.filename == '':
         return 'ファイル名が空です。'
 
+    title = request.form.get('title')
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
 
-    threading.Thread(target=process_and_upload, args=(file_path,)).start()
+    threading.Thread(target=process_and_upload, args=(file_path, title)).start()
 
     return render_template('upload.html', message='ファイルがアップロードされました！')
 
@@ -46,7 +47,7 @@ def keep():
     print("receive a signal from replit")
     return jsonify({'message', 'Alive'}), 200
 
-def process_and_upload(file_path):
+def process_and_upload(file_path, title):
     """動画を Cloudinary にアップロードし、Replit に送信"""
     upload_result = cloudinary.uploader.upload(
         file_path,
@@ -57,8 +58,8 @@ def process_and_upload(file_path):
     print(f"Uploaded: {video_url}")
 
     try:
-        print(f"Sending data: {{'url': '{video_url}'}}")
-        response = requests.post(REPLIT_DISCORD_ENDPOINT, json={"video_url": video_url})
+        print(f"Sending data: {{'url': '{video_url}', 'title': '{title}'}}")
+        response = requests.post(REPLIT_DISCORD_ENDPOINT, json={"video_url": video_url, "title": title})
         print(f"koko no URL kakunin* {response}")
         print(f"Sent video URL to Replit: {response.status_code} - {response.text}")
     except Exception as e:
