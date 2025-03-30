@@ -2,7 +2,7 @@ import os
 import time
 import requests
 import threading
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import cloudinary
 import cloudinary.uploader
 
@@ -41,6 +41,10 @@ def upload_file():
 
     return render_template('upload.html', message='ファイルがアップロードされました！')
 
+@app.route('/keep', method=['GET'])
+def keep():
+    return jsonify({'message', 'Alive'}), 200
+
 def process_and_upload(file_path):
     """動画を Cloudinary にアップロードし、Replit に送信"""
     upload_result = cloudinary.uploader.upload(
@@ -51,9 +55,8 @@ def process_and_upload(file_path):
     video_url = upload_result['secure_url']
     print(f"Uploaded: {video_url}")
 
-    # Replit の Discord BOT に動画 URL を送信
     try:
-        print(f"Sending data: {{'url': '{video_url}'}}")  # 実際に送信するデータを確認
+        print(f"Sending data: {{'url': '{video_url}'}}")
         response = requests.post(REPLIT_DISCORD_ENDPOINT, json={"video_url": video_url})
         print(f"koko no URL kakunin* {response}")
         print(f"Sent video URL to Replit: {response.status_code} - {response.text}")
@@ -69,11 +72,9 @@ def ping_replit():
         except Exception as e:
             print(f"Error sending ping: {e}")
 
-        time.sleep(300)  # 5 分おき（300秒）
+        time.sleep(300)
 
 if __name__ == '__main__':
-    # Replit を維持するスレッドを起動
     threading.Thread(target=ping_replit, daemon=True).start()
 
-    # Flask アプリを実行
     app.run(debug=True, use_reloader=False)
