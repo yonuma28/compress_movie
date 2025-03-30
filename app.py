@@ -65,17 +65,6 @@ def process_and_upload(file_path, title):
     except Exception as e:
         print(f"Error sending video URL: {e}")
 
-def ping_replit():
-    """Replit の BOT を維持するため、5 分おきにリクエストを送る"""
-    while True:
-        try:
-            response = requests.get(REPLIT_URL)
-            print(f"Ping to Replit: {response.status_code} - {response.text}")
-        except Exception as e:
-            print(f"Error sending ping: {e}")
-
-        time.sleep(10)
-
 if __name__ == '__main__':
     threading.Thread(target=ping_replit, daemon=True).start()
 
