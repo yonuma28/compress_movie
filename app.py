@@ -25,8 +25,7 @@ cloudinary.config(
 )
 
 # Discord クライアント設定
-intents = Intents.all()  # すべてのインテントを有効にする
-intents.message_content = True
+intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
 # Flask アプリケーション設定
