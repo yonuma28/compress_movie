@@ -115,8 +115,6 @@ if __name__ == '__main__':
     flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
     
-    # ping_replit関数を別スレッドで実行
-    ping_thread = Thread(target=ping_replit, daemon=True)
-    ping_thread.start()
-    
-    client.run(TOKEN)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(client.start(TOKEN))
