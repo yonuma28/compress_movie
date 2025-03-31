@@ -101,7 +101,7 @@ def ping_replit():
             print(f"Ping to keep_alive: {response.status_code} - {response.text}")
         except Exception as e:
             print(f"Error sending ping: {e}")
-        
+        print(f"実行")
         time.sleep(60)
 
 if __name__ == '__main__':
