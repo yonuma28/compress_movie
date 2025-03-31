@@ -48,6 +48,7 @@ def send_video():
     video_file = data.get('file')
     logger.info(f"data 確認: {data}")
     title = data.get('title', 'Video')
+    logger.info(f"title: {title}")
 
     logger.info("ここまでは行けている")
     if video_file:
