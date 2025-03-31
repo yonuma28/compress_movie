@@ -93,15 +93,20 @@ def run_flask():
 async def on_ready():
     print(f'Logged in as {client.user}')
 
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 def ping_replit():
     """指定されたURLに60秒おきにリクエストを送る"""
     while True:
         try:
             response = requests.get("https://2c6aa011-4aab-4719-a328-72141802bf19-00-1sun3j2fbtgrc.riker.replit.dev/keep_alive")
-            print(f"Ping to keep_alive: {response.status_code} - {response.text}")
+            logger.info(f"Ping to keep_alive: {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"Error sending ping: {e}")
-        print(f"実行")
+            logger.error(f"Error sending ping: {e}")
+        logger.info("実行")
         time.sleep(60)
 
 if __name__ == '__main__':
