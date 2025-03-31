@@ -7,7 +7,7 @@
 </head>
 <body>
     <video autoplay loop muted playsinline id="cover-video">
-        <source src="movie/back.webm" type="video/webm">
+        <source src="{{ url_for('static', filename='movie/back.webm') }}" type="video/webm">
     </video>
     <div class="overlay"></div>
     <div class="main_form">
