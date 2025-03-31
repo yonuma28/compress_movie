@@ -128,5 +128,4 @@ if __name__ == '__main__':
     flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
-    # Discord BOT を非同期で実行
-    asyncio.run(bot.start(TOKEN))
+    bot.run(TOKEN)
