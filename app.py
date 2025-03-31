@@ -107,11 +107,9 @@ def process_and_upload(file_path, title):
             else:
                 logger.error(f"Invalid channel: {CHANNEL_ID}")
 
-        # イベントループを使用して非同期タスクを実行
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(send_to_discord())
-        loop.close()
+        # 既存のイベントループを使用して非同期タスクを実行
+        loop = bot.loop  # discord.pyのイベントループを使用
+        loop.create_task(send_to_discord())  # 非同期タスクとして実行
 
         logger.info("Video URL sent to Discord successfully.")
     except Exception as e:
