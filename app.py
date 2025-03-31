@@ -75,16 +75,26 @@ def upload_file():
         return 'ファイル名が空です。', 400
     
     title = request.form.get('title', 'Video')
+    category = request.form.get('category')  # カテゴリを取得
+    channel_id = None  # 初期化
+
+    if category == '気持ちいい clips':
+        channel_id = os.getenv('GOOD')
+    elif category == '笑える clips':
+        channel_id = os.getenv('FUNNY')
+
+    logger.info(f"Selected category: {category}, Channel ID: {channel_id}")
+
     file_path = f"uploads/{file.filename}"
     file.save(file_path)
     
-    threading.Thread(target=process_and_upload, args=(file_path, title)).start()
+    threading.Thread(target=process_and_upload, args=(file_path, title, category, channel_id)).start()
 
     return redirect(url_for('index'))
 
-def process_and_upload(file_path, title):
+def process_and_upload(file_path, title, category, channel_id):
     """動画をCloudinaryにアップロードし、そのURLをDiscordに送信する"""
-    logger.info(f"Starting upload for file: {file_path} with title: {title}")
+    logger.info(f"Starting upload for file: {file_path} with title: {title}, category: {category}, channel ID: {channel_id}")
     
     try:
         logger.info("Uploading video to Cloudinary...")
@@ -95,12 +105,12 @@ def process_and_upload(file_path, title):
         logger.info(f"Upload successful. Video URL: {video_url}")
 
         async def send_to_discord():
-            logger.info(f"Sending video URL to Discord channel: {CHANNEL_ID}")
-            channel = bot.get_channel(CHANNEL_ID)
+            logger.info(f"Sending video URL to Discord channel: {channel_id}")
+            channel = bot.get_channel(int(channel_id))
             if isinstance(channel, discord.TextChannel):
-                await channel.send(f"[{title}]({video_url})")
+                await channel.send(f"[{title} - {category}]({video_url})")
             else:
-                logger.error(f"Invalid channel: {CHANNEL_ID}")
+                logger.error(f"Invalid channel: {channel_id}")
 
         loop = bot.loop
         loop.create_task(send_to_discord())
