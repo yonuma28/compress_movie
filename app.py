@@ -77,6 +77,24 @@ def upload_file():
     # アップロード後に同じページにリダイレクト
     return redirect(url_for('index'))
 
+def process_and_upload(file_path, title):
+    """動画をCloudinaryにアップロードし、そのURLをDiscordに送信する"""
+    try:
+        # Cloudinaryに動画をアップロード
+        upload_result = cloudinary.uploader.upload(
+            file_path, resource_type='video', eager=[{'width': 800, 'height': 600, 'crop': 'limit'}]
+        )
+        video_url = upload_result['secure_url']
+        
+        # Discordに動画URLを送信
+        channel = bot.get_channel(CHANNEL_ID)
+        if isinstance(channel, discord.TextChannel):
+            asyncio.run_coroutine_threadsafe(channel.send(f"[{title}]({video_url})"), bot.loop)
+        
+        print(f"Uploaded video URL: {video_url}")
+    except Exception as e:
+        print(f"Error uploading video: {e}")
+
 def run_flask():
     app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
 
