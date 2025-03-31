@@ -11,7 +11,7 @@ from discord.ext import commands
 from threading import Thread
 
 TOKEN = os.getenv('TOKEN')
-CHANNEL_ID = int(os.getenv('CHANNEL_ID', 1343840413420617748))
+CHANNEL_ID = int(os.getenv('CHANNEL_ID', 1244248370307010654))
 
 app = Flask(__name__)
 
