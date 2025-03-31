@@ -10,12 +10,14 @@ import discord
 from discord import Intents
 from threading import Thread
 
-# 環境変数の読み込み
 TOKEN = os.getenv('TOKEN')
 CHANNEL_ID = int(os.getenv('CHANNEL_ID', 1343840413420617748))
 CLOUD_NAME = os.getenv('CLOUD_NAME')
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
+
+REPLIT_SEND_VIDEO = 'https://compress-movie.onrender.com/send_video'
+REPLIT_KEEP_ALIVE = 'https://2c6aa011-4aab-4719-a328-72141802bf19-00-1sun3j2fbtgrc.riker.replit.dev/keep_alive'
 
 # Cloudinary の設定
 cloudinary.config(
@@ -81,7 +83,7 @@ def process_and_upload(file_path, title):
     print(f"Uploaded: {video_url}")
     
     try:
-        response = requests.post('https://compress-movie.onrender.com/send_video', json={"video_url": video_url, "title": title})
+        response = requests.post(REPLIT_SEND_VIDEO, json={"video_url": video_url, "title": title})
         print(f"Sent video URL to Discord: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"Error sending video URL: {e}")
@@ -102,7 +104,7 @@ def ping_replit():
     """指定されたURLに60秒おきにリクエストを送る"""
     while True:
         try:
-            response = requests.get("https://2c6aa011-4aab-4719-a328-72141802bf19-00-1sun3j2fbtgrc.riker.replit.dev/keep_alive")
+            response = requests.get(REPLIT_KEEP_ALIVE)
             logger.info(f"Ping to keep_alive: {response.status_code} - {response.text}")
         except Exception as e:
             logger.error(f"Error sending ping: {e}")
