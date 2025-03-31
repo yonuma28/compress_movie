@@ -19,6 +19,10 @@ app = Flask(__name__)
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+@app.route('/')
+def index():
+    return render_template('upload.html')
+
 @app.route('/keep_alive', methods=['GET'])
 def keep_alive():
     return jsonify({'message': 'Alive'}), 200
