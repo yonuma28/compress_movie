@@ -121,7 +121,7 @@ def run_flask():
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user}')
+    logger.info(f'Logged in as {bot.user}')
 
 if __name__ == '__main__':
     # Flask を別スレッドで起動
