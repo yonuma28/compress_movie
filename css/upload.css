@@ -1,0 +1,76 @@
+/* @import url(destyle.css); */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.main_form {
+    background: linear-gradient(to right, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translateY(-50%);
+    padding: 20px;
+    border-radius: 8px;
+    width: 30%;
+    height: 100%;
+}
+
+.main_upload {
+    text-align: left;
+}
+
+form {
+    padding-top: 50%;
+}
+
+#cover-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.5);
+    z-index: 0;
+}
+
+input[type="text"], input[type="file"], input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+}
+
+input[type="text"]:focus, input[type="file"]:focus, input[type="submit"]:hover {
+    border-color: #ff00009c;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+input[type="submit"] {
+    
+    background-color: #ff00009c;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+input[type="submit"]:hover {
+    background-color: #ff0000d8;
+}
