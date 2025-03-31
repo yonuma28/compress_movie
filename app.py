@@ -46,6 +46,7 @@ def send_video():
     """受け取った動画を Cloudinary にアップロードし、Discord に送信"""
     data = request.json
     video_file = data.get('file')
+    logger.info(f"data 確認: {data}")
     title = data.get('title', 'Video')
 
     logger.info("ここまでは行けている")
