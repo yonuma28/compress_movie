@@ -18,20 +18,18 @@ logger = logging.getLogger(__name__)
 
 
 TOKEN = os.getenv('TOKEN')
-CHANNEL_ID = int(os.getenv('CHANNEL_ID', 1244248370307010654))
+CHANNEL_ID = int(os.getenv('CHANNEL_ID', 1343840413420617748))
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Cloudinary の設定
 cloudinary.config(
     cloud_name=os.getenv('CLOUD_NAME'),
     api_key=os.getenv('API_KEY'),
     api_secret=os.getenv('API_SECRET')
 )
 
-# Discord クライアント設定
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -47,7 +45,7 @@ def keep_alive():
 def send_video():
     """受け取った動画を Cloudinary にアップロードし、Discord に送信"""
     data = request.json
-    video_file = data.get('file')  # 受け取ったファイル
+    video_file = data.get('file')
     title = data.get('title', 'Video')
 
     logger.info("ここまでは行けている")
@@ -82,7 +80,6 @@ def upload_file():
     
     threading.Thread(target=process_and_upload, args=(file_path, title)).start()
 
-    # アップロード後に同じページにリダイレクト
     return redirect(url_for('index'))
 
 def process_and_upload(file_path, title):
@@ -90,7 +87,6 @@ def process_and_upload(file_path, title):
     logger.info(f"Starting upload for file: {file_path} with title: {title}")
     
     try:
-        # Cloudinaryに動画をアップロード
         logger.info("Uploading video to Cloudinary...")
         upload_result = cloudinary.uploader.upload(
             file_path, resource_type='video', eager=[{'width': 800, 'height': 600, 'crop': 'limit'}]
@@ -98,7 +94,6 @@ def process_and_upload(file_path, title):
         video_url = upload_result['secure_url']
         logger.info(f"Upload successful. Video URL: {video_url}")
 
-        # 非同期でDiscordに動画URLを送信
         async def send_to_discord():
             logger.info(f"Sending video URL to Discord channel: {CHANNEL_ID}")
             channel = bot.get_channel(CHANNEL_ID)
@@ -107,9 +102,8 @@ def process_and_upload(file_path, title):
             else:
                 logger.error(f"Invalid channel: {CHANNEL_ID}")
 
-        # 既存のイベントループを使用して非同期タスクを実行
-        loop = bot.loop  # discord.pyのイベントループを使用
-        loop.create_task(send_to_discord())  # 非同期タスクとして実行
+        loop = bot.loop
+        loop.create_task(send_to_discord())
 
         logger.info("Video URL sent to Discord successfully.")
     except Exception as e:
@@ -124,7 +118,6 @@ async def on_ready():
     logger.info(f'Logged in as {bot.user}')
 
 if __name__ == '__main__':
-    # Flask を別スレッドで起動
     flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
