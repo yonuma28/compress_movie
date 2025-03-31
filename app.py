@@ -93,7 +93,23 @@ def run_flask():
 async def on_ready():
     print(f'Logged in as {client.user}')
 
+def ping_replit():
+    """指定されたURLに60秒おきにリクエストを送る"""
+    while True:
+        try:
+            response = requests.get("https://2c6aa011-4aab-4719-a328-72141802bf19-00-1sun3j2fbtgrc.riker.replit.dev/keep_alive")
+            print(f"Ping to keep_alive: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"Error sending ping: {e}")
+        
+        time.sleep(60)
+
 if __name__ == '__main__':
     flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
+    
+    # ping_replit関数を別スレッドで実行
+    ping_thread = Thread(target=ping_replit, daemon=True)
+    ping_thread.start()
+    
     client.run(TOKEN)
