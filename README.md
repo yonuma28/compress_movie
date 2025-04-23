@@ -1,1 +1,2 @@
 # compress_movie
+discordで８MB以上の動画を送信する
