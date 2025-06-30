@@ -46,9 +46,8 @@ class VideoUploadModal(ui.Modal, title='動画アップロード'):
             return
 
         await interaction.response.send_message(
-            f'タイトル: `{title}`, カテゴリ: `{category}` で動画をアップロードします。
-'
-            f'**このメッセージに動画ファイルを添付して送信してください。**',
+            f'''タイトル: `{title}`, カテゴリ: `{category}` で動画をアップロードします。
+**このメッセージに動画ファイルを添付して送信してください。**''',
             ephemeral=False # 他のユーザーにも見えるようにする
         )
         # ユーザーの次のメッセージを待つために情報を保存
