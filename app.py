@@ -28,32 +28,39 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 class VideoUploadModal(ui.Modal, title='動画アップロード'):
     video_title = ui.TextInput(label='動画のタイトル', placeholder='動画のタイトルを入力してください', required=True)
-    video_category = ui.TextInput(label='カテゴリ (気持ちいい clips / 笑える clips)', placeholder='例: 気持ちいい clips', required=True)
+    video_channel = ui.Select(
+        placeholder='動画をアップロードするチャンネルを選択してください',
+        options=[
+            discord.SelectOption(label='気持ちいい clips', value='good_clips'),
+            discord.SelectOption(label='笑える clips', value='funny_clips')
+        ]
+    )
 
     async def on_submit(self, interaction: discord.Interaction):
         title = self.video_title.value
-        category = self.video_category.value
+        selected_channel_value = self.video_channel.values[0] # 選択された値を取得
 
-        # カテゴリに基づいてチャンネルIDを設定
         channel_id = None
-        if category == '気持ちいい clips':
-            channel_id = os.getenv('GOOD_CHANNEL_ID') # 環境変数から取得
-        elif category == '笑える clips':
-            channel_id = os.getenv('FUNNY_CHANNEL_ID') # 環境変数から取得
+        channel_name = ""
+        if selected_channel_value == 'good_clips':
+            channel_id = os.getenv('GOOD_CHANNEL_ID')
+            channel_name = '気持ちいい clips'
+        elif selected_channel_value == 'funny_clips':
+            channel_id = os.getenv('FUNNY_CHANNEL_ID')
+            channel_name = '笑える clips'
 
         if not channel_id:
-            await interaction.response.send_message('無効なカテゴリです。', ephemeral=True)
+            await interaction.response.send_message('チャンネルの選択が無効です。', ephemeral=True)
             return
 
         await interaction.response.send_message(
-            f'''タイトル: `{title}`, カテゴリ: `{category}` で動画をアップロードします。
+            f'''タイトル: `{title}`, チャンネル: `{channel_name}` に動画をアップロードします。
 **このメッセージに動画ファイルを添付して送信してください。**''',
-            ephemeral=False # 他のユーザーにも見えるようにする
+            ephemeral=False
         )
-        # ユーザーの次のメッセージを待つために情報を保存
         bot.waiting_for_video[interaction.user.id] = {
             'title': title,
-            'category': category,
+            'channel_name': channel_name, # 新しく追加
             'channel_id': int(channel_id),
             'uploader_id': interaction.user.id,
             'uploader_mention': interaction.user.mention
@@ -106,7 +113,8 @@ async def on_message(message: discord.Message):
                     target_channel = bot.get_channel(channel_id)
                     if isinstance(target_channel, discord.TextChannel):
                         uploader_mention = user_data.get('uploader_mention', '不明なユーザー')
-                        await target_channel.send(f"[{title} - {category}]({video_url}) (Uploaded by: {uploader_mention})")
+                        channel_name = user_data.get('channel_name', '不明なカテゴリ') # channel_name を取得
+                        await target_channel.send(f"[{title} - {channel_name}]({video_url}) (Uploaded by: {uploader_mention})")
                         await message.channel.send('動画が正常にアップロードされ、Discordに送信されました。', reference=message)
                     else:
                         logger.error(f"Invalid target channel: {channel_id}")
