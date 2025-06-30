@@ -1,6 +1,2 @@
-Flask>=2.2,<2.3
-werkzeug>=2.0.0
-moviepy==1.0.3
-discord.py==1.7.3
-gunicorn
+discord.py>=2.3.2
 cloudinary

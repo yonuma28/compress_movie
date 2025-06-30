@@ -1,28 +1,20 @@
 import os
-import time
 import asyncio
-import requests
-import threading
 import cloudinary
 import cloudinary.uploader
-from flask import Flask, request, render_template, jsonify, redirect, url_for
 import discord
 from discord.ext import commands
-from threading import Thread
+from discord import app_commands, ui
 
 import logging
 
 # ロギングの設定
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
 TOKEN = os.getenv('TOKEN')
-CHANNEL_ID = int(os.getenv('CHANNEL_ID', 1343840413420617748))
-
-app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# CHANNEL_ID はコマンド内で動的に取得するため、ここでは不要
+# UPLOAD_FOLDER はDiscordの添付ファイルとして処理するため不要
 
 cloudinary.config(
     cloud_name=os.getenv('CLOUD_NAME'),
@@ -31,106 +23,105 @@ cloudinary.config(
 )
 
 intents = discord.Intents.default()
+intents.message_content = True # メッセージの内容を読み取るために必要
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-@app.route('/')
-def index():
-    return render_template('upload.html')
+class VideoUploadModal(ui.Modal, title='動画アップロード'):
+    video_title = ui.TextInput(label='動画のタイトル', placeholder='動画のタイトルを入力してください', required=True)
+    video_category = ui.TextInput(label='カテゴリ (気持ちいい clips / 笑える clips)', placeholder='例: 気持ちいい clips', required=True)
 
-@app.route('/keep_alive', methods=['GET'])
-def keep_alive():
-    return jsonify({'message': 'Alive'}), 200
+    async def on_submit(self, interaction: discord.Interaction):
+        title = self.video_title.value
+        category = self.video_category.value
 
-@app.route('/send_video', methods=['POST'])
-def send_video():
-    """受け取った動画を Cloudinary にアップロードし、Discord に送信"""
-    data = request.json
-    video_file = data.get('file')
-    logger.info(f"data 確認: {data}")
-    title = data.get('title', 'Video')
-    logger.info(f"title: {title}")
+        # カテゴリに基づいてチャンネルIDを設定
+        channel_id = None
+        if category == '気持ちいい clips':
+            channel_id = os.getenv('GOOD_CHANNEL_ID') # 環境変数から取得
+        elif category == '笑える clips':
+            channel_id = os.getenv('FUNNY_CHANNEL_ID') # 環境変数から取得
 
-    logger.info("ここまでは行けている")
-    if video_file:
-        file_path = f"uploads/{video_file.filename}"
-        video_file.save(file_path)
+        if not channel_id:
+            await interaction.response.send_message('無効なカテゴリです。', ephemeral=True)
+            return
 
-        upload_result = cloudinary.uploader.upload(
-            file_path, resource_type='video', eager=[{'width': 800, 'height': 600, 'crop': 'limit'}]
+        await interaction.response.send_message(
+            f'タイトル: `{title}`, カテゴリ: `{category}` で動画をアップロードします。
+'
+            f'**このメッセージに動画ファイルを添付して送信してください。**',
+            ephemeral=False # 他のユーザーにも見えるようにする
         )
-        video_url = upload_result['secure_url']
+        # ユーザーの次のメッセージを待つために情報を保存
+        bot.waiting_for_video[interaction.user.id] = {
+            'title': title,
+            'category': category,
+            'channel_id': int(channel_id),
+            'uploader_id': interaction.user.id,
+            'uploader_mention': interaction.user.mention
+        }
 
-        channel = bot.get_channel(CHANNEL_ID)
-        if isinstance(channel, discord.TextChannel):
-            asyncio.run_coroutine_threadsafe(channel.send(f"[{title}]({video_url})"), bot.loop)
-        return jsonify({'message': '動画 URL を Discord に送信しました'}), 200
-
-    return jsonify({'message': '動画ファイルが見つかりませんでした'}), 400
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    """動画を受け取り、Cloudinary にアップロードし、Discord に送信"""
-    if 'file' not in request.files:
-        return 'ファイルが見つかりませんでした。', 400
-    file = request.files['file']
-    if file.filename == '':
-        return 'ファイル名が空です。', 400
-    
-    title = request.form.get('title', 'Video')
-    category = request.form.get('category')  # カテゴリを取得
-    channel_id = None  # 初期化
-
-    if category == '気持ちいい clips':
-        channel_id = os.getenv('GOOD')
-    elif category == '笑える clips':
-        channel_id = os.getenv('FUNNY')
-
-    logger.info(f"Selected category: {category}, Channel ID: {channel_id}")
-
-    file_path = f"uploads/{file.filename}"
-    file.save(file_path)
-    
-    threading.Thread(target=process_and_upload, args=(file_path, title, category, channel_id)).start()
-
-    return redirect(url_for('index'))
-
-def process_and_upload(file_path, title, category, channel_id):
-    """動画をCloudinaryにアップロードし、そのURLをDiscordに送信する"""
-    logger.info(f"Starting upload for file: {file_path} with title: {title}, category: {category}, channel ID: {channel_id}")
-    
-    try:
-        logger.info("Uploading video to Cloudinary...")
-        upload_result = cloudinary.uploader.upload(
-            file_path, resource_type='video', eager=[{'width': 800, 'height': 600, 'crop': 'limit'}]
-        )
-        video_url = upload_result['secure_url']
-        logger.info(f"Upload successful. Video URL: {video_url}")
-
-        async def send_to_discord():
-            logger.info(f"Sending video URL to Discord channel: {channel_id}")
-            channel = bot.get_channel(int(channel_id))
-            if isinstance(channel, discord.TextChannel):
-                await channel.send(f"[{title} - {category}]({video_url})")
-            else:
-                logger.error(f"Invalid channel: {channel_id}")
-
-        loop = bot.loop
-        loop.create_task(send_to_discord())
-
-        logger.info("Video URL sent to Discord successfully.")
-    except Exception as e:
-        logger.error(f"Error during video upload and Discord send: {e}")
-
-
-def run_flask():
-    app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
 
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
+    # スラッシュコマンドを同期
+    await bot.tree.sync()
+    logger.info('Slash commands synced.')
+    bot.waiting_for_video = {} # ユーザーからの動画添付を待つための辞書
+
+@bot.tree.command(name="upload", description="動画をアップロードします")
+async def upload_command(interaction: discord.Interaction):
+    await interaction.response.send_modal(VideoUploadModal())
+
+@bot.event
+async def on_message(message: discord.Message):
+    if message.author.bot:
+        return
+
+    if message.author.id in bot.waiting_for_video:
+        if message.attachments:
+            attachment = message.attachments[0]
+            if attachment.content_type and attachment.content_type.startswith('video/'):
+                user_data = bot.waiting_for_video.pop(message.author.id)
+                title = user_data['title']
+                category = user_data['category']
+                channel_id = user_data['channel_id']
+
+                await message.channel.send(f'動画のアップロードを開始します: `{attachment.filename}`', reference=message)
+                
+                try:
+                    # 動画を一時的に保存
+                    temp_file_path = f"temp_{attachment.filename}"
+                    await attachment.save(temp_file_path)
+
+                    logger.info(f"Uploading video to Cloudinary: {temp_file_path}")
+                    upload_result = cloudinary.uploader.upload(
+                        temp_file_path, resource_type='video', eager=[{'width': 800, 'height': 600, 'crop': 'limit'}]
+                    )
+                    video_url = upload_result['secure_url']
+                    logger.info(f"Upload successful. Video URL: {video_url}")
+
+                    # 一時ファイルを削除
+                    os.remove(temp_file_path)
+
+                    target_channel = bot.get_channel(channel_id)
+                    if isinstance(target_channel, discord.TextChannel):
+                        uploader_mention = user_data.get('uploader_mention', '不明なユーザー')
+                        await target_channel.send(f"[{title} - {category}]({video_url}) (Uploaded by: {uploader_mention})")
+                        await message.channel.send('動画が正常にアップロードされ、Discordに送信されました。', reference=message)
+                    else:
+                        logger.error(f"Invalid target channel: {channel_id}")
+                        await message.channel.send('指定されたチャンネルが見つからないか、テキストチャンネルではありません。', reference=message)
+
+                except Exception as e:
+                    logger.error(f"Error during video upload and Discord send: {e}")
+                    await message.channel.send(f'動画のアップロード中にエラーが発生しました: {e}', reference=message)
+            else:
+                await message.channel.send('添付ファイルが動画ではありません。動画ファイルを添付してください。', reference=message)
+        else:
+            await message.channel.send('動画ファイルが添付されていません。動画ファイルを添付して送信してください。', reference=message)
+    
+    await bot.process_commands(message) # コマンド処理を継続するために必要
 
 if __name__ == '__main__':
-    flask_thread = Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-
     bot.run(TOKEN)
