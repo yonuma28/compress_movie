@@ -58,7 +58,7 @@ class ChannelSelectView(ui.View):
         placeholder='動画をアップロードするチャンネルを選択してください',
         options=[
             discord.SelectOption(label='気持ちいい clips', value='good_clips'),
-            discord.SelectOption(label='笑える clips', value='funny_clips')
+            discord.SelectOption(label='B2B clips', value='funny_clips') # valueはそのままにしておく
         ]
     )
     async def select_channel(self, interaction: discord.Interaction, select: ui.Select):
@@ -70,8 +70,8 @@ class ChannelSelectView(ui.View):
             channel_id = os.getenv('GOOD_CHANNEL_ID')
             channel_name = '気持ちいい clips'
         elif selected_value == 'funny_clips':
-            channel_id = os.getenv('FUNNY_CHANNEL_ID')
-            channel_name = '笑える clips'
+            channel_id = os.getenv('B2B_CHANNEL_ID') # ここをB2B_CHANNEL_IDに変更
+            channel_name = 'B2B clips' # ここをB2B clipsに変更
 
         if not channel_id:
             await interaction.response.send_message('チャンネルの選択が無効です。', ephemeral=True)
