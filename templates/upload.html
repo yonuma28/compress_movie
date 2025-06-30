@@ -4,40 +4,35 @@
     <meta charset="UTF-8">
     <title>動画アップロード</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
-    <script>
-        function updateChannelId() {
-            const category = document.querySelector('select[name="category"]').value;
-            const channelIdInput = document.getElementById('channel_id');
-
-            if (category === '気持ちいい clips') {
-                channelIdInput.value = 'FEEL_GOOD';
-            } else if (category === '笑える clips') {
-                channelIdInput.value = 'FUNNY';
-            }
-        }
-    </script>
 </head>
 <body>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
     <video autoplay loop muted playsinline id="cover-video">
         <source src="{{ url_for('static', filename='movie/back.webm') }}" type="video/webm">
     </video>
     <div class="overlay"></div>
     <div class="main_form">
         <div class="main_upload">
-            <form action="/upload" method="post" enctype="multipart/form-data">
+            <form action="/upload_web" method="post" enctype="multipart/form-data">
                 <h1>タイトルを入力してください</h1>
                 <input type="text" name="title" placeholder="タイトルを入力" required>
                 
                 <h1>動画のカテゴリを選択してください</h1>
-                <select name="category" required onchange="updateChannelId()">
-                    <option value="気持ちいい clips" selected>気持ちいい clips</option>
-                    <option value="笑える clips">笑える clips</option>
+                <select name="channel" required>
+                    <option value="good_clips" selected>気持ちいい clips</option>
+                    <option value="funny_clips">B2B clips</option>
                 </select>
                 
-                <input type="hidden" name="channel_id" id="channel_id" value="YOUR_DEFAULT_CHANNEL_ID"> <!-- 隠しフィールド -->
-                
                 <h1>動画をアップロードしてください</h1>
-                <input type="file" name="file" accept="video/*" required>
+                <input type="file" name="video" accept="video/*" required>
                 <input type="submit" value="アップロード">
             </form>
         </div>
