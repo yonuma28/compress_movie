@@ -94,9 +94,8 @@ async def on_ready():
 
 @app.route('/')
 def index():
-    return render_template('upload.html',
-                           good_channel_id=os.getenv('GOOD_CHANNEL_ID'),
-                           b2b_channel_id=os.getenv('B2B_CHANNEL_ID'))
+    # クエリパラメータを/upload_webに引き継いでリダイレクト
+    return redirect(url_for('upload_web', **request.args))
 
 @app.route('/upload_web', methods=['GET', 'POST'])
 async def upload_web():

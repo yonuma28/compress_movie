@@ -23,12 +23,12 @@
         <div class="main_upload">
             <form action="/upload_web" method="post" enctype="multipart/form-data">
                 <h1>タイトルを入力してください</h1>
-                <input type="text" name="title" placeholder="タイトルを入力" required>
+                <input type="text" name="title" placeholder="タイトルを入力" value="{{ initial_title or '' }}" required>
                 
                 <h1>動画のカテゴリを選択してください</h1>
                 <select name="channel_id" required>
-                    <option value="{{ good_channel_id }}">気持ちいい clips</option>
-                    <option value="{{ b2b_channel_id }}">B2B clips</option>
+                    <option value="{{ good_channel_id }}" {% if initial_channel_id == good_channel_id %}selected{% endif %}>気持ちいい clips</option>
+                    <option value="{{ b2b_channel_id }}" {% if initial_channel_id == b2b_channel_id %}selected{% endif %}>B2B clips</option>
                 </select>
                 
                 <h1>動画をアップロードしてください</h1>
