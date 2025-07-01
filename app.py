@@ -4,7 +4,7 @@ import cloudinary
 import cloudinary.uploader
 import discord
 from discord.ext import commands
-from discord import app_commands, ui
+from discord import app_commands
 from flask import Flask, request, render_template, redirect, url_for, flash
 
 import logging
@@ -29,71 +29,12 @@ intents = discord.Intents.default()
 intents.message_content = True # メッセージの内容を読み取るために必要
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-class VideoTitleModal(ui.Modal, title='動画のタイトルを入力'):
-    video_title = ui.TextInput(label='動画のタイトル', placeholder='動画のタイトルを入力してください (任意)', required=False)
-
-    def __init__(self, selected_channel_id: int, selected_channel_name: str):
-        super().__init__()
-        self.selected_channel_id = selected_channel_id
-        self.selected_channel_name = selected_channel_name
-
-    async def on_submit(self, interaction: discord.Interaction):
-        title = self.video_title.value if self.video_title.value else ""
-        
-        # ウェブアップロード用のURLを生成
-        upload_url = f"{WEB_APP_URL}?title={title}&channel_id={self.selected_channel_id}"
-
-        await interaction.response.send_message(
-            f'タイトル: `{title}`, チャンネル: `{self.selected_channel_name}` に動画をアップロードします。\n'
-            f'以下のURLにアクセスして動画ファイルをアップロードしてください。\n'
-            f'<{upload_url}>', # URLを埋め込みリンクとして表示
-            ephemeral=True # 他のユーザーには見えないようにする
-        )
-
-class ChannelSelectView(ui.View):
-    def __init__(self):
-        super().__init__(timeout=180) # 3分でタイムアウト
-
-    @ui.select(
-        placeholder='動画をアップロードするチャンネルを選択してください',
-        options=[
-            discord.SelectOption(label='気持ちいい clips', value='good_clips'),
-            discord.SelectOption(label='B2B clips', value='funny_clips') # valueはそのままにしておく
-        ]
-    )
-    async def select_channel(self, interaction: discord.Interaction, select: ui.Select):
-        selected_value = select.values[0]
-        channel_id = None
-        channel_name = ""
-
-        if selected_value == 'good_clips':
-            channel_id = os.getenv('GOOD_CHANNEL_ID')
-            channel_name = '気持ちいい clips'
-        elif selected_value == 'funny_clips':
-            channel_id = os.getenv('B2B_CHANNEL_ID') # ここをB2B_CHANNEL_IDに変更
-            channel_name = 'B2B clips' # ここをB2B clipsに変更
-
-        if not channel_id:
-            await interaction.response.send_message('チャンネルの選択が無効です。', ephemeral=True)
-            return
-
-        # チャンネルが選択されたら、タイトル入力モーダルを表示
-        await interaction.response.send_modal(VideoTitleModal(int(channel_id), channel_name))
-        self.stop() # Viewを停止して、これ以上選択できないようにする
-
-
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
     # スラッシュコマンドを同期
     await bot.tree.sync()
     logger.info('Slash commands synced.')
-
-@app.route('/')
-def index():
-    return render_template('upload.html',
-                           good_channel_id=os.getenv('GOOD_CHANNEL_ID'),
-                           b2b_channel_id=os.getenv('B2B_CHANNEL_ID'))
 
 @app.route('/upload_web', methods=['GET', 'POST'])
 async def upload_web():
@@ -170,12 +111,34 @@ async def upload_web():
     flash('すべてのフィールドを入力してください')
     return redirect(request.url)
 
+from typing import Literal
+
 @bot.tree.command(name="upload", description="動画をアップロードします")
-async def upload_command(interaction: discord.Interaction):
-    await interaction.response.send_message(
-        '動画をアップロードするチャンネルを選択してください。',
-        view=ChannelSelectView(),
-        ephemeral=True # 他のユーザーには見えないようにする
+@app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル (任意)")
+async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: str = ""):
+    await interaction.response.defer(ephemeral=True)
+
+    channel_id = None
+    channel_name = ""
+
+    if channel == '気持ちいい clips':
+        channel_id = os.getenv('GOOD_CHANNEL_ID')
+        channel_name = '気持ちいい clips'
+    elif channel == 'B2B clips':
+        channel_id = os.getenv('B2B_CHANNEL_ID')
+        channel_name = 'B2B clips'
+
+    if not channel_id:
+        await interaction.followup.send('チャンネルの選択が無効です。', ephemeral=True)
+        return
+
+    upload_url = f"{WEB_APP_URL}?title={title}&channel_id={channel_id}"
+
+    await interaction.followup.send(
+        f'タイトル: `{title}`, チャンネル: `{channel_name}` に動画をアップロードします。\n'
+        f'以下のURLにアクセスして動画ファイルをアップロードしてください。\n'
+        f'<{upload_url}>',
+        ephemeral=True
     )
 
 if __name__ == '__main__':
