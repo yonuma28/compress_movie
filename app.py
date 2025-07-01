@@ -152,7 +152,12 @@ async def upload_web():
 
             target_channel = bot.get_channel(channel_id)
             if isinstance(target_channel, discord.TextChannel):
-                await target_channel.send(f"[ウェブアップロード: {title} - {channel_name}]({video_url})")
+                # botのイベントループでtarget_channel.sendを安全に実行
+                future = asyncio.run_coroutine_threadsafe(
+                    target_channel.send(f"[ウェブアップロード: {title} - {channel_name}]({video_url})"),
+                    bot.loop
+                )
+                future.result() # 完了を待つ
                 flash('動画が正常にアップロードされ、Discordに送信されました。')
             else:
                 logger.error(f"Invalid target channel for web upload: {channel_id}")
