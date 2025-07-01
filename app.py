@@ -32,7 +32,7 @@ intents.message_content = True # メッセージの内容を読み取るため�
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 class VideoTitleModal(ui.Modal, title='動画のタイトルを入力'):
-    video_title = ui.TextInput(label='動画のタイトル', placeholder='動画のタイトルを入力してください', required=True)
+    video_title = ui.TextInput(label='動画のタイトル', placeholder='動画のタイトルを入力してください (任意)', required=False)
 
     def __init__(self, selected_channel_id: int, selected_channel_name: str):
         super().__init__()
@@ -40,7 +40,7 @@ class VideoTitleModal(ui.Modal, title='動画のタイトルを入力'):
         self.selected_channel_name = selected_channel_name
 
     async def on_submit(self, interaction: discord.Interaction):
-        title = self.video_title.value
+        title = self.video_title.value if self.video_title.value else ""
         
         # ウェブアップロード用のURLを生成
         upload_url = f"{WEB_APP_URL}?title={title}&channel_id={self.selected_channel_id}"
@@ -114,14 +114,14 @@ async def upload_web():
         return redirect(request.url)
 
     video_file = request.files['video']
-    title = request.form.get('title')
+    title = request.form.get('title', '') # タイトルがなくてもOK
     channel_id_str = request.form.get('channel_id') # フォームから直接channel_idを取得
 
     if video_file.filename == '':
         flash('ファイルが選択されていません')
         return redirect(request.url)
 
-    if video_file and title and channel_id_str:
+    if video_file and channel_id_str:
         try:
             channel_id = int(channel_id_str)
         except ValueError:
@@ -153,7 +153,10 @@ async def upload_web():
 
             target_channel = bot.get_channel(channel_id)
             if isinstance(target_channel, discord.TextChannel):
-                await target_channel.send(f"[ウェブアップロード: {title} - {channel_name}]({video_url})")
+                message_content = f"[ウェブアップロード: {channel_name}]({video_url})"
+                if title:
+                    message_content = f"[ウェブアップロード: {title} - {channel_name}]({video_url})"
+                await target_channel.send(message_content)
                 flash('動画が正常にアップロードされ、Discordに送信されました。')
             else:
                 logger.error(f"Invalid target channel for web upload: {channel_id}")

@@ -23,7 +23,7 @@
         <div class="main_upload">
             <form action="/upload_web" method="post" enctype="multipart/form-data">
                 <h1>タイトルを入力してください</h1>
-                <input type="text" name="title" placeholder="タイトルを入力" required value="{{ initial_title | default('') }}">
+                <input type="text" name="title" placeholder="タイトルを入力 (任意)" value="{{ initial_title | default('') }}">
                 
                 <h1>動画のカテゴリを選択してください</h1>
                 <select name="channel_id" required>
