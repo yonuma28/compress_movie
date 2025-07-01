@@ -156,7 +156,7 @@ async def upload_web():
             target_channel = bot.get_channel(channel_id)
             if isinstance(target_channel, discord.TextChannel):
                 # botのイベントループでtarget_channel.sendを安全に実行
-                message = f"({author}){title}\n{video_url}"
+                message = f"[{author} - {title}]({video_url})"
                 future = asyncio.run_coroutine_threadsafe(
                     target_channel.send(message),
                     bot.loop
