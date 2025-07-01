@@ -5,7 +5,7 @@ import cloudinary.uploader
 import discord
 from discord.ext import commands
 from discord import app_commands
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for
 
 import logging
 
