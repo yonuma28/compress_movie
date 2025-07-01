@@ -103,6 +103,8 @@ async def upload_web():
 @bot.tree.command(name="upload", description="動画をアップロードします")
 @app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル")
 async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: str):
+    await interaction.response.defer(ephemeral=True)
+
     author = interaction.user.display_name
     channel_id = None
 
@@ -112,14 +114,13 @@ async def upload_command(interaction: discord.Interaction, channel: Literal['気
         channel_id = os.getenv('B2B_CHANNEL_ID')
 
     if not channel_id:
-        await interaction.response.send_message('無効なチャンネルが選択されました。', ephemeral=True)
         return
 
     upload_url = f"{WEB_APP_URL}?title={title}&channel_id={channel_id}&author={author}"
 
-    await interaction.response.send_message(
-        f'タイトル: `{title}`, チャンネル: `{channel}` に動画をアップロードします.\n'
-        f'以下のURLにアクセスして動画ファイルをアップロードしてください.\n'
+    await interaction.followup.send(
+        f'タイトル: `{title}`, チャンネル: `{channel}` に動画をアップロードします。\n'
+        f'以下のURLにアクセスして動画ファイルをアップロードしてください。\n'
         f'<{upload_url}>',
         ephemeral=True
     )
