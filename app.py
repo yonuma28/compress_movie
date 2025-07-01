@@ -41,7 +41,7 @@ async def on_ready():
 async def upload_web():
     if request.method == 'GET':
         # GETリクエストの場合は、クエリパラメータからタイトルとチャンネルIDを取得してフォームに渡す
-        title = request.args.get('title', '')
+        title_param = title if title is not None else ""
         channel_id = request.args.get('channel_id', '')
         return render_template('upload.html', initial_title=title, initial_channel_id=channel_id,
                                good_channel_id=os.getenv('GOOD_CHANNEL_ID'),
@@ -104,11 +104,11 @@ async def upload_web():
         return redirect(url_for('index'))
     return redirect(request.url)
 
-from typing import Literal
+from typing import Literal, Optional
 
 @bot.tree.command(name="upload", description="動画をアップロードします")
 @app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル (任意)")
-async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: str = ""):
+async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: Optional[str] = None):
     await interaction.response.defer(ephemeral=True)
 
     channel_id = None
@@ -125,10 +125,10 @@ async def upload_command(interaction: discord.Interaction, channel: Literal['気
         await interaction.followup.send('チャンネルの選択が無効です。', ephemeral=True)
         return
 
-    upload_url = f"{WEB_APP_URL}?title={title}&channel_id={channel_id}"
+    upload_url = f"{WEB_APP_URL}?title={title_param}&channel_id={channel_id}"
 
     await interaction.followup.send(
-        f'タイトル: `{title}`, チャンネル: `{channel_name}` に動画をアップロードします。\n'
+        f'タイトル: `{title_param}`, チャンネル: `{channel_name}` に動画をアップロードします.\n'
         f'以下のURLにアクセスして動画ファイルをアップロードしてください。\n'
         f'<{upload_url}>',
         ephemeral=True
