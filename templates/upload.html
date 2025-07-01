@@ -6,15 +6,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/upload.css') }}">
 </head>
 <body>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul class=flashes>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+    
     <video autoplay loop muted playsinline id="cover-video">
         <source src="{{ url_for('static', filename='movie/back.webm') }}" type="video/webm">
     </video>
@@ -24,6 +16,7 @@
             <form action="/upload_web" method="post" enctype="multipart/form-data">
                 <h1>タイトルを入力してください</h1>
                 <input type="text" name="title" placeholder="タイトルを入力" value="{{ initial_title or '' }}" required>
+                <input type="hidden" name="author" value="{{ initial_author or '' }}">
                 
                 <h1>動画のカテゴリを選択してください</h1>
                 <select name="channel_id" required>

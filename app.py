@@ -41,9 +41,10 @@ class VideoTitleModal(ui.Modal, title='動画のタイトルを入力'):
 
     async def on_submit(self, interaction: discord.Interaction):
         title = self.video_title.value
+        author = interaction.user.display_name
         
         # ウェブアップロード用のURLを生成
-        upload_url = f"{WEB_APP_URL}?title={title}&channel_id={self.selected_channel_id}"
+        upload_url = f"{WEB_APP_URL}?title={title}&channel_id={self.selected_channel_id}&author={author}"
 
         await interaction.response.send_message(
             f'タイトル: `{title}`, チャンネル: `{self.selected_channel_name}` に動画をアップロードします。\n'
@@ -103,28 +104,30 @@ async def upload_web():
         # GETリクエストの場合は、クエリパラメータからタイトルとチャンネルIDを取得してフォームに渡す
         title = request.args.get('title', '')
         channel_id = request.args.get('channel_id', '')
-        return render_template('upload.html', initial_title=title, initial_channel_id=channel_id,
+        author = request.args.get('author', '')
+        return render_template('upload.html', initial_title=title, initial_channel_id=channel_id, initial_author=author,
                                good_channel_id=os.getenv('GOOD_CHANNEL_ID'),
                                b2b_channel_id=os.getenv('B2B_CHANNEL_ID'))
 
     # POSTリクエストの場合
     if 'video' not in request.files:
-        flash('動画ファイルがありません')
+        
         return redirect(request.url)
 
     video_file = request.files['video']
     title = request.form.get('title')
     channel_id_str = request.form.get('channel_id') # フォームから直接channel_idを取得
+    author = request.form.get('author')
 
     if video_file.filename == '':
-        flash('ファイルが選択されていません')
+        
         return redirect(request.url)
 
     if video_file and title and channel_id_str:
         try:
             channel_id = int(channel_id_str)
         except ValueError:
-            flash('無効なチャンネルIDです')
+            
             return redirect(request.url)
 
         # チャンネル名を取得（表示用）
@@ -134,7 +137,7 @@ async def upload_web():
         elif str(channel_id) == os.getenv('B2B_CHANNEL_ID'):
             channel_name = 'B2B clips'
         else:
-            flash('無効なチャンネルが選択されました')
+            
             return redirect(request.url)
 
         temp_file_path = os.path.join('/tmp', video_file.filename) # /tmp に保存
@@ -153,25 +156,22 @@ async def upload_web():
             target_channel = bot.get_channel(channel_id)
             if isinstance(target_channel, discord.TextChannel):
                 # botのイベントループでtarget_channel.sendを安全に実行
+                message = f"({author}){title}\n{video_url}"
                 future = asyncio.run_coroutine_threadsafe(
-                    target_channel.send(f"[ウェブアップロード: {title} - {channel_name}]({video_url})"),
+                    target_channel.send(message),
                     bot.loop
                 )
                 future.result() # 完了を待つ
-                flash('動画が正常にアップロードされ、Discordに送信されました。')
             else:
                 logger.error(f"Invalid target channel for web upload: {channel_id}")
-                flash('指定されたチャンネルが見つからないか、テキストチャンネルではありません。')
 
         except Exception as e:
             logger.error(f"Error during web video upload and Discord send: {e}")
-            flash(f'動画のアップロード中にエラーが発生しました: {e}')
         finally:
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
         return redirect(url_for('index'))
-    flash('すべてのフィールドを入力してください')
     return redirect(request.url)
 
 @bot.tree.command(name="upload", description="動画をアップロードします")
