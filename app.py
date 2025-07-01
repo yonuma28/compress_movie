@@ -33,6 +33,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
     # スラッシュコマンドを同期
+    bot.tree.clear_commands(guild=None) # 全てのギルドからコマンドをクリア
     await bot.tree.sync()
     logger.info('Slash commands synced.')
 
@@ -48,7 +49,6 @@ async def upload_web():
 
     # POSTリクエストの場合
     if 'video' not in request.files:
-        flash('動画ファイルがありません')
         return redirect(request.url)
 
     video_file = request.files['video']
@@ -56,14 +56,12 @@ async def upload_web():
     channel_id_str = request.form.get('channel_id') # フォームから直接channel_idを取得
 
     if video_file.filename == '':
-        flash('ファイルが選択されていません')
         return redirect(request.url)
 
     if video_file and channel_id_str:
         try:
             channel_id = int(channel_id_str)
         except ValueError:
-            flash('無効なチャンネルIDです')
             return redirect(request.url)
 
         # チャンネル名を取得（表示用）
@@ -73,7 +71,6 @@ async def upload_web():
         elif str(channel_id) == os.getenv('B2B_CHANNEL_ID'):
             channel_name = 'B2B clips'
         else:
-            flash('無効なチャンネルが選択されました')
             return redirect(request.url)
 
         temp_file_path = os.path.join('/tmp', video_file.filename) # /tmp に保存
@@ -95,20 +92,16 @@ async def upload_web():
                 if title:
                     message_content = f"[ウェブアップロード: {title} - {channel_name}]({video_url})"
                 await target_channel.send(message_content)
-                flash('動画が正常にアップロードされ、Discordに送信されました。')
             else:
                 logger.error(f"Invalid target channel for web upload: {channel_id}")
-                flash('指定されたチャンネルが見つからないか、テキストチャンネルではありません。')
 
         except Exception as e:
             logger.error(f"Error during web video upload and Discord send: {e}")
-            flash(f'動画のアップロード中にエラーが発生しました: {e}')
         finally:
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
         return redirect(url_for('index'))
-    flash('すべてのフィールドを入力してください')
     return redirect(request.url)
 
 from typing import Literal
