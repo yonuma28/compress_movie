@@ -4,9 +4,10 @@ import cloudinary
 import cloudinary.uploader
 import discord
 from discord.ext import commands
-from discord import app_commands, ui
+from discord import app_commands
 from flask import Flask, request, render_template, redirect, url_for
 from typing import Literal, Optional
+
 
 import logging
 
@@ -33,30 +34,28 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
+    # スラッシュコマンドを同期
+    bot.tree.clear_commands(guild=None) # 全てのギルドからコマンドをクリア
     await bot.tree.sync()
     logger.info('Slash commands synced.')
-
-@app.route('/')
-def index():
-    return redirect(url_for('upload_web', **request.args))
 
 @app.route('/upload_web', methods=['GET', 'POST'])
 async def upload_web():
     if request.method == 'GET':
-        title = request.args.get('title', '')
+        # GETリクエストの場合は、クエリパラメータからタイトルとチャンネルIDを取得してフォームに渡す
+        title_param = title if title is not None else ""
         channel_id = request.args.get('channel_id', '')
-        author = request.args.get('author', '')
-        return render_template('upload.html', initial_title=title, initial_channel_id=channel_id, initial_author=author,
+        return render_template('upload.html', initial_title=title, initial_channel_id=channel_id,
                                good_channel_id=os.getenv('GOOD_CHANNEL_ID'),
                                b2b_channel_id=os.getenv('B2B_CHANNEL_ID'))
 
+    # POSTリクエストの場合
     if 'video' not in request.files:
         return redirect(request.url)
 
     video_file = request.files['video']
-    title = request.form.get('title')
-    channel_id_str = request.form.get('channel_id')
-    author = request.form.get('author')
+    title = request.form.get('title', '') # タイトルがなくてもOK
+    channel_id_str = request.form.get('channel_id') # フォームから直接channel_idを取得
 
     if video_file.filename == '':
         return redirect(request.url)
@@ -104,20 +103,25 @@ async def upload_web():
         return redirect(url_for('index'))
     return redirect(request.url)
 
+from typing import Literal, Optional
+
 @bot.tree.command(name="upload", description="動画をアップロードします")
 @app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル（任意）")
 async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: Optional[str] = None):
     await interaction.response.defer(ephemeral=True)
 
-    author = interaction.user.display_name
     channel_id = None
+    channel_name = ""
 
     if channel == '気持ちいい clips':
         channel_id = os.getenv('GOOD_CHANNEL_ID')
+        channel_name = '気持ちいい clips'
     elif channel == 'B2B clips':
         channel_id = os.getenv('B2B_CHANNEL_ID')
+        channel_name = 'B2B clips'
 
     if not channel_id:
+        await interaction.followup.send('チャンネルの選択が無効です。', ephemeral=True)
         return
 
     url_title = title if title is not None else ""
