@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands, ui
 from flask import Flask, request, render_template, redirect, url_for
-from typing import Literal
+from typing import Literal, Optional
 
 import logging
 
@@ -61,11 +61,15 @@ async def upload_web():
     if video_file.filename == '':
         return redirect(request.url)
 
-    if video_file and title and channel_id_str:
+    if video_file and channel_id_str:
         try:
             channel_id = int(channel_id_str)
         except ValueError:
             return redirect(request.url)
+
+        final_title = title
+        if not final_title:
+            final_title = os.path.splitext(video_file.filename)[0]
 
         temp_file_path = os.path.join('/tmp', video_file.filename)
         await asyncio.to_thread(video_file.save, temp_file_path)
@@ -82,7 +86,7 @@ async def upload_web():
 
             target_channel = bot.get_channel(channel_id)
             if isinstance(target_channel, discord.TextChannel):
-                message = f"[{author} - {title}]({video_url})"
+                message = f"[{author} - {final_title}]({video_url})"
                 future = asyncio.run_coroutine_threadsafe(
                     target_channel.send(message),
                     bot.loop
@@ -101,8 +105,8 @@ async def upload_web():
     return redirect(request.url)
 
 @bot.tree.command(name="upload", description="動画をアップロードします")
-@app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル")
-async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: str):
+@app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル（任意）")
+async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: Optional[str] = None):
     await interaction.response.defer(ephemeral=True)
 
     author = interaction.user.display_name
@@ -116,10 +120,13 @@ async def upload_command(interaction: discord.Interaction, channel: Literal['気
     if not channel_id:
         return
 
-    upload_url = f"{WEB_APP_URL}?title={title}&channel_id={channel_id}&author={author}"
+    url_title = title if title is not None else ""
+    display_title = title if title is not None else "（タイトルなし）"
+
+    upload_url = f"{WEB_APP_URL}?title={url_title}&channel_id={channel_id}&author={author}"
 
     await interaction.followup.send(
-        f'タイトル: `{title}`, チャンネル: `{channel}` に動画をアップロードします。\n'
+        f'タイトル: `{display_title}`, チャンネル: `{channel}` に動画をアップロードします。\n'
         f'以下のURLにアクセスして動画ファイルをアップロードしてください。\n'
         f'<{upload_url}>',
         ephemeral=True
