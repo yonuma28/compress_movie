@@ -34,10 +34,18 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
-    # スラッシュコマンドを同期
-    bot.tree.clear_commands(guild=None) # 全てのギルドからコマンドをクリア
-    await bot.tree.sync()
-    logger.info('Slash commands synced.')
+    
+    guild_id = os.getenv('GUILD_ID')
+    if guild_id:
+        guild = discord.Object(id=int(guild_id))
+        # グローバルコマンドをギルドにコピーし、即時反映させる
+        bot.tree.copy_global_to(guild=guild)
+        await bot.tree.sync(guild=guild)
+        logger.info(f'Slash commands synced to guild: {guild_id}')
+    else:
+        # GUILD_IDが設定されていない場合はグローバルに同期（反映に時間がかかる）
+        await bot.tree.sync()
+        logger.info('Slash commands synced globally.')
 
 @app.route('/upload_web', methods=['GET', 'POST'])
 async def upload_web():
