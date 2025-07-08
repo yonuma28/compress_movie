@@ -98,7 +98,6 @@ async def upload_web():
                     target_channel.send(message),
                     bot.loop
                 )
-                future.result()
             else:
                 logger.error(f"Invalid target channel for web upload: {channel_id}")
 
