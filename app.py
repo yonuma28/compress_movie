@@ -33,10 +33,20 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
-    # スラッシュコマンドを同期
-    bot.tree.clear_commands(guild=None) # 全てのギルドからコマンドをクリア
-    await bot.tree.sync()
-    logger.info('Slash commands synced.')
+    
+    guild_id = os.getenv('GUILD_ID')
+    if guild_id:
+        try:
+            guild = discord.Object(id=int(guild_id))
+            # スラッシュコマンドをギルドに同期
+            await bot.tree.sync(guild=guild)
+            logger.info(f'Slash commands synced to guild {guild_id}.')
+        except ValueError:
+            logger.error("Invalid GUILD_ID. Please set a valid integer guild ID.")
+    else:
+        # スラッシュコマンドをグローバルに同期
+        await bot.tree.sync()
+        logger.info('Slash commands synced globally. It may take up to an hour for changes to appear.')
 
 
 
