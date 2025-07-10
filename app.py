@@ -104,7 +104,7 @@ async def upload_web():
 from typing import Literal, Optional
 
 @bot.tree.command(name="upload", description="動画をアップロードします")
-@app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル (任意)")
+@app_commands.describe(channel="アップロード先のチャンネル", title="動画のタイトル（任意）")
 async def upload_command(interaction: discord.Interaction, channel: Literal['気持ちいい clips', 'B2B clips'], title: Optional[str] = None):
     await interaction.response.defer(ephemeral=True)
 
