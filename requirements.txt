@@ -2,3 +2,4 @@ discord.py>=2.3.2
 cloudinary
 Flask[async]
 aiohttp
+gunicorn
